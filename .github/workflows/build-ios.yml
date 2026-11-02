@@ -1,0 +1,45 @@
+name: Build SPOPUDAY iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS IPA
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
+
+      - name: Build SPOPUDAY iOS App
+        run: |
+          xcodebuild clean build \
+            -project SPOPUDAY.xcodeproj \
+            -scheme SPOPUDAY \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/SPOPUDAY.app Payload/
+          zip -r SPOPUDAY.ipa Payload
+          ls -lh SPOPUDAY.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SPOPUDAY-iOS-IPA
+          path: SPOPUDAY.ipa
+          retention-days: 14
+
